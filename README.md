@@ -1,1 +1,1648 @@
-# index.html
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบติดตามการจ่ายเงิน Sanrio Realtime Cloud Payment Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt & Mali -->
+    <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Canvas Confetti CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        sanrio: {
+                            pink: '#FFB7C5',
+                            pinkLight: '#FFF0F3',
+                            pinkDark: '#FF758F',
+                            cream: '#FFF9F2',
+                            yellow: '#FFE5EC',
+                            mint: '#D8F3DC',
+                            mintDark: '#52B788',
+                            blue: '#D0E1FD',
+                            blueDark: '#6C9BCF',
+                            purple: '#E2D4F9',
+                            purpleDark: '#9D4EDD',
+                            border: '#FFCCD5'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Prompt', 'Mali', 'sans-serif'],
+                        cute: ['Mali', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Prompt', 'Mali', sans-serif;
+            background: linear-gradient(135deg, #FFF0F3 0%, #FFF9F2 50%, #E6F0FA 100%);
+            min-height: 100vh;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #FFF0F3;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #FFB7C5;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #FF758F;
+        }
+
+        /* Sanrio Soft Shadows & Cards */
+        .sanrio-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(8px);
+            border: 2px solid #FFCCD5;
+            box-shadow: 0 10px 25px -5px rgba(255, 183, 197, 0.3), 0 8px 10px -6px rgba(255, 183, 197, 0.2);
+        }
+        
+        .sanrio-btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .sanrio-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 117, 143, 0.3);
+        }
+        .sanrio-btn:active {
+            transform: translateY(0);
+        }
+
+        .sanrio-tab-active {
+            background-color: #FF758F !important;
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(255, 117, 143, 0.4);
+        }
+
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(4deg); }
+        }
+        .floating-icon {
+            animation: floatSlow 4s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="text-gray-700 pb-16 relative overflow-x-hidden">
+
+    <!-- Sanrio Background Deco Floating Elements -->
+    <div class="fixed top-6 left-6 opacity-30 pointer-events-none floating-icon text-3xl text-pink-400">🎀</div>
+    <div class="fixed top-20 right-10 opacity-30 pointer-events-none floating-icon text-3xl text-yellow-400" style="animation-delay: 1s;">✨</div>
+    <div class="fixed bottom-10 left-10 opacity-30 pointer-events-none floating-icon text-3xl text-blue-400" style="animation-delay: 2s;">🌸</div>
+    <div class="fixed bottom-20 right-6 opacity-30 pointer-events-none floating-icon text-3xl text-purple-400" style="animation-delay: 1.5s;">🍓</div>
+
+    <!-- MAIN APP CONTAINER -->
+    <div id="app" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+
+        <!-- HEADER SECTION -->
+        <header class="sanrio-card rounded-3xl p-4 sm:p-6 mb-6 flex flex-col lg:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-start">
+                <div class="flex items-center gap-3">
+                    <div class="w-14 h-14 rounded-2xl bg-pink-100 border-2 border-pink-300 flex items-center justify-center text-3xl shadow-inner">
+                        😽
+                    </div>
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold font-cute text-pink-600 flex items-center gap-2">
+                            LIBERTAS <span class="text-xs px-3 py-1 rounded-full bg-pink-100 text-pink-500 font-normal font-sans">แผนกบัญชีออนไลน์ 🌐</span>
+                        </h1>
+                        <p class="text-xs sm:text-sm text-gray-500 flex items-center gap-1.5 mt-0.5">
+                            <span id="syncStatusBadge" class="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                ซิงค์คลาวด์เรียลไทม์
+                            </span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Share Link Button (Mobile View Right) -->
+                <button onclick="copyShareLink()" class="lg:hidden sanrio-btn bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300 px-3 py-2 rounded-2xl text-xs font-semibold flex items-center gap-1">
+                    <i class="fa-solid fa-share-nodes"></i> แชร์
+                </button>
+            </div>
+
+            <!-- Global Actions & Filters -->
+            <div class="flex flex-wrap items-center justify-center lg:justify-end gap-2 w-full lg:w-auto">
+                <!-- Month Filter -->
+                <div class="flex items-center bg-white border-2 border-pink-200 rounded-2xl px-3 py-1.5 shadow-sm">
+                    <i class="fa-regular font-bold fa-calendar-days text-pink-400 mr-2 text-sm"></i>
+                    <input type="month" id="globalMonthPicker" class="bg-transparent text-xs font-semibold text-gray-700 outline-none cursor-pointer">
+                </div>
+
+                <!-- Share Link Button (Desktop) -->
+                <button onclick="copyShareLink()" class="hidden lg:flex sanrio-btn bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-300 px-3.5 py-2 rounded-2xl text-xs sm:text-sm font-semibold items-center gap-1.5">
+                    <i class="fa-solid fa-share-nodes"></i> แชร์ลิงก์
+                </button>
+
+                <!-- Action Buttons -->
+                <button onclick="openPayerModal()" class="sanrio-btn bg-pink-400 hover:bg-pink-500 text-white font-medium text-xs sm:text-sm px-3.5 py-2 rounded-2xl flex items-center gap-1.5">
+                    <i class="fa-solid fa-user-plus"></i> เพิ่มสมาชิก
+                </button>
+                <button onclick="openPaymentModal()" class="sanrio-btn bg-sanrio-mintDark hover:opacity-90 text-white font-medium text-xs sm:text-sm px-3.5 py-2 rounded-2xl flex items-center gap-1.5">
+                    <i class="fa-solid fa-plus-circle"></i> บันทึกการจ่าย
+                </button>
+                
+                <!-- Data Menu Dropdown -->
+                <div class="relative inline-block text-left">
+                    <button onclick="toggleDataMenu()" class="sanrio-btn bg-white border-2 border-pink-200 text-gray-600 px-3 py-2 rounded-2xl text-xs sm:text-sm flex items-center gap-1 hover:bg-pink-50">
+                        <i class="fa-solid fa-ellipsis-vertical text-pink-400"></i>
+                    </button>
+                    <div id="dataMenu" class="hidden absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border-2 border-pink-200 z-50 py-2">
+                        <button onclick="exportJSON()" class="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-pink-50 flex items-center gap-2">
+                            <i class="fa-solid fa-download text-pink-400"></i> สำรองข้อมูล (Export JSON)
+                        </button>
+                        <button onclick="triggerImportJSON()" class="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-pink-50 flex items-center gap-2">
+                            <i class="fa-solid fa-upload text-blue-400"></i> นำเข้าข้อมูล (Import JSON)
+                        </button>
+                        <input type="file" id="importFileInput" accept=".json" class="hidden" onchange="importJSON(event)">
+                        <hr class="my-1 border-pink-100">
+                        <button onclick="loadSampleData()" class="w-full text-left px-4 py-2 text-xs text-purple-600 hover:bg-purple-50 flex items-center gap-2 font-medium">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> โหลดข้อมูลตัวอย่างคลาวด์
+                        </button>
+                        <button onclick="confirmClearAll()" class="w-full text-left px-4 py-2 text-xs text-red-500 hover:bg-red-50 flex items-center gap-2 font-medium">
+                            <i class="fa-solid fa-trash-can"></i> ล้างข้อมูลบนคลาวด์ทั้งหมด
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- NAVIGATION TABS -->
+        <nav class="flex flex-wrap gap-2 mb-6 bg-white/70 p-2 rounded-3xl border border-pink-200 shadow-sm justify-center sm:justify-start">
+            <button id="tab-dashboard" onclick="switchTab('dashboard')" class="tab-btn sanrio-btn sanrio-tab-active px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-gray-600">
+                <i class="fa-solid fa-chart-pie"></i> ภาพรวมสรุป
+            </button>
+            <button id="tab-daily" onclick="switchTab('daily')" class="tab-btn sanrio-btn px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-gray-600">
+                <i class="fa-solid fa-sun"></i> รายวัน (Daily)
+            </button>
+            <button id="tab-weekly" onclick="switchTab('weekly')" class="tab-btn sanrio-btn px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-gray-600">
+                <i class="fa-solid fa-calendar-week"></i> รายสัปดาห์ (Weekly)
+            </button>
+            <button id="tab-monthly" onclick="switchTab('monthly')" class="tab-btn sanrio-btn px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-gray-600">
+                <i class="fa-solid fa-calendar-check"></i> รายเดือน (Monthly)
+            </button>
+            <button id="tab-history" onclick="switchTab('history')" class="tab-btn sanrio-btn px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-gray-600">
+                <i class="fa-solid fa-list-check"></i> ประวัติทั้งหมด
+            </button>
+            <button id="tab-payers" onclick="switchTab('payers')" class="tab-btn sanrio-btn px-4 py-2 rounded-2xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-gray-600 ml-auto">
+                <i class="fa-solid fa-users"></i> จัดการผู้จ่ายเงิน
+            </button>
+        </nav>
+
+        <!-- MAIN VIEW PORT -->
+        <main>
+            <!-- 1. DASHBOARD TAB -->
+            <section id="view-dashboard" class="tab-view space-y-6">
+                <!-- KPI Summary Cards -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Total Received -->
+                    <div class="sanrio-card rounded-3xl p-5 border-l-8 border-l-pink-400">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-500">ยอดที่ได้รับจริงเดือนนี้</p>
+                                <h3 id="dashTotalPaid" class="text-2xl font-extrabold text-pink-600 mt-1">฿0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-500 text-xl shadow-inner">
+                                💰
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-pink-100 flex justify-between text-xs text-gray-500">
+                            <span>เป้าหมายเดือนนี้:</span>
+                            <span id="dashTotalTarget" class="font-semibold text-gray-700">฿0</span>
+                        </div>
+                    </div>
+
+                    <!-- Pending Payment -->
+                    <div class="sanrio-card rounded-3xl p-5 border-l-8 border-l-amber-400">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-500">ยอดค้างชำระ (ยังไม่จ่าย)</p>
+                                <h3 id="dashTotalUnpaid" class="text-2xl font-extrabold text-amber-500 mt-1">฿0</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center text-amber-500 text-xl shadow-inner">
+                                ⏳
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-amber-100 flex justify-between text-xs text-gray-500">
+                            <span>รายการที่ค้าง:</span>
+                            <span id="dashUnpaidCount" class="font-semibold text-amber-600">0 รายการ</span>
+                        </div>
+                    </div>
+
+                    <!-- Paid Headcount Ratio -->
+                    <div class="sanrio-card rounded-3xl p-5 border-l-8 border-l-emerald-400">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-500">จำนวนคนที่จ่ายครบแล้ว</p>
+                                <h3 id="dashPaidHeadcount" class="text-2xl font-extrabold text-emerald-600 mt-1">0 / 0 คน</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center text-emerald-500 text-xl shadow-inner">
+                                🎉
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-emerald-100 text-xs text-gray-500">
+                            <div class="w-full bg-emerald-100 rounded-full h-2 mt-1 overflow-hidden">
+                                <div id="dashProgressBar" class="bg-emerald-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Breakdown by Cycle -->
+                    <div class="sanrio-card rounded-3xl p-5 border-l-8 border-l-purple-400">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-500">สมาชิกทั้งหมดในระบบ</p>
+                                <h3 id="dashPayerTotal" class="text-2xl font-extrabold text-purple-600 mt-1">0 คน</h3>
+                            </div>
+                            <div class="w-12 h-12 rounded-2xl bg-purple-100 flex items-center justify-center text-purple-500 text-xl shadow-inner">
+                                🐱
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-purple-100 text-xs text-gray-500 flex justify-between">
+                            <span>รายวัน: <strong id="cntDaily">0</strong></span>
+                            <span>สัปดาห์: <strong id="cntWeekly">0</strong></span>
+                            <span>เดือน: <strong id="cntMonthly">0</strong></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Chart 1: Income Breakdown by Cycle -->
+                    <div class="sanrio-card rounded-3xl p-5">
+                        <h4 class="text-base font-bold text-gray-700 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-bar text-pink-400"></i> ยอดรับจริงแยกตามประเภทชำระ
+                        </h4>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartCycleSummary"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Chart 2: Paid Status Doughnut -->
+                    <div class="sanrio-card rounded-3xl p-5">
+                        <h4 class="text-base font-bold text-gray-700 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-purple-400"></i> สัดส่วนการจ่ายแล้ว vs ยังไม่จ่าย
+                        </h4>
+                        <div class="h-64 relative flex items-center justify-center">
+                            <canvas id="chartStatusSummary"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. DAILY TRACKER TAB -->
+            <section id="view-daily" class="tab-view hidden space-y-4">
+                <div class="sanrio-card rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">☀️</span>
+                        <div>
+                            <h3 class="font-bold text-gray-700">ติดตามการจ่ายเงินรายวัน</h3>
+                            <p class="text-xs text-gray-500">เลือกวันที่เพื่อเช็กหรือบันทึกสถานะของสมาชิกรายวัน</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 bg-pink-50 border border-pink-200 rounded-2xl px-3 py-1.5">
+                        <label for="dailyDatePicker" class="text-xs font-semibold text-pink-600">วันที่:</label>
+                        <input type="date" id="dailyDatePicker" class="bg-transparent text-sm text-gray-700 font-semibold outline-none cursor-pointer">
+                    </div>
+                </div>
+
+                <div id="dailyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Rendered dynamically -->
+                </div>
+            </section>
+
+            <!-- 3. WEEKLY TRACKER TAB -->
+            <section id="view-weekly" class="tab-view hidden space-y-4">
+                <div class="sanrio-card rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">📆</span>
+                        <div>
+                            <h3 class="font-bold text-gray-700">ตารางเช็กการจ่ายรายสัปดาห์</h3>
+                            <p class="text-xs text-gray-500">แยกตามสัปดาห์ที่ 1 - 5 ของเดือนที่เลือก</p>
+                        </div>
+                    </div>
+                    <div id="weeklySubFilter" class="flex flex-wrap gap-1 bg-pink-50 p-1 rounded-2xl border border-pink-200">
+                        <button onclick="setWeeklySubWeek(1)" class="wk-btn text-xs font-semibold px-3 py-1.5 rounded-xl transition-all" data-week="1">สัปดาห์ 1</button>
+                        <button onclick="setWeeklySubWeek(2)" class="wk-btn text-xs font-semibold px-3 py-1.5 rounded-xl transition-all" data-week="2">สัปดาห์ 2</button>
+                        <button onclick="setWeeklySubWeek(3)" class="wk-btn text-xs font-semibold px-3 py-1.5 rounded-xl transition-all" data-week="3">สัปดาห์ 3</button>
+                        <button onclick="setWeeklySubWeek(4)" class="wk-btn text-xs font-semibold px-3 py-1.5 rounded-xl transition-all" data-week="4">สัปดาห์ 4</button>
+                        <button onclick="setWeeklySubWeek(5)" class="wk-btn text-xs font-semibold px-3 py-1.5 rounded-xl transition-all" data-week="5">สัปดาห์ 5</button>
+                    </div>
+                </div>
+
+                <div id="weeklyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Rendered dynamically -->
+                </div>
+            </section>
+
+            <!-- 4. MONTHLY TRACKER TAB -->
+            <section id="view-monthly" class="tab-view hidden space-y-4">
+                <div class="sanrio-card rounded-3xl p-4 sm:p-5 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <span class="text-2xl">🗓️</span>
+                        <div>
+                            <h3 class="font-bold text-gray-700">ติดตามสถานะการจ่ายรายเดือน</h3>
+                            <p class="text-xs text-gray-500">สำหรับสมาชิกที่มีรอบชำระแบบรายเดือน</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="monthlyGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Rendered dynamically -->
+                </div>
+            </section>
+
+            <!-- 5. HISTORY & EDIT TAB -->
+            <section id="view-history" class="tab-view hidden space-y-4">
+                <div class="sanrio-card rounded-3xl p-4 sm:p-5 flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-2 w-full md:w-auto">
+                        <div class="relative w-full sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-pink-300 text-sm"></i>
+                            <input type="text" id="historySearchInput" placeholder="ค้นหาชื่อ หรือ หมายเหตุ..." class="w-full pl-9 pr-4 py-2 rounded-2xl border-2 border-pink-200 text-xs text-gray-700 focus:outline-none focus:border-pink-400 bg-white" oninput="renderHistoryTable()">
+                        </div>
+
+                        <select id="historyCycleFilter" class="bg-white border-2 border-pink-200 rounded-2xl px-3 py-2 text-xs text-gray-700 focus:outline-none cursor-pointer" onchange="renderHistoryTable()">
+                            <option value="all">ทุกรูปแบบ (วัน/สัปดาห์/เดือน)</option>
+                            <option value="daily">รายวัน (Daily)</option>
+                            <option value="weekly">รายสัปดาห์ (Weekly)</option>
+                            <option value="monthly">รายเดือน (Monthly)</option>
+                        </select>
+
+                        <select id="historyStatusFilter" class="bg-white border-2 border-pink-200 rounded-2xl px-3 py-2 text-xs text-gray-700 focus:outline-none cursor-pointer" onchange="renderHistoryTable()">
+                            <option value="all">ทุกสถานะ</option>
+                            <option value="paid">จ่ายแล้ว ✅</option>
+                            <option value="unpaid">ยังไม่จ่าย ⏳</option>
+                        </select>
+                    </div>
+
+                    <button onclick="openPaymentModal()" class="sanrio-btn bg-pink-400 text-white px-4 py-2 rounded-2xl text-xs font-semibold flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus"></i> เพิ่มรายการจ่ายเงิน
+                    </button>
+                </div>
+
+                <div class="sanrio-card rounded-3xl overflow-hidden shadow-sm">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-pink-100/70 text-pink-700 text-xs font-semibold border-b border-pink-200">
+                                    <th class="p-3.5 pl-5">ผู้จ่ายเงิน</th>
+                                    <th class="p-3.5">รอบชำระ</th>
+                                    <th class="p-3.5">วันที่กำนด/จ่ายจริง</th>
+                                    <th class="p-3.5 text-right">จำนวนเงิน</th>
+                                    <th class="p-3.5 text-center">สถานะ</th>
+                                    <th class="p-3.5">หมายเหตุ</th>
+                                    <th class="p-3.5 text-center pr-5">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTableBody" class="divide-y divide-pink-100 text-xs text-gray-700">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 6. PAYERS MANAGEMENT TAB -->
+            <section id="view-payers" class="tab-view hidden space-y-4">
+                <div class="sanrio-card rounded-3xl p-4 sm:p-5 flex items-center justify-between">
+                    <div>
+                        <h3 class="font-bold text-gray-700 text-base">รายชื่อสมาชิก / ผู้จ่ายเงิน</h3>
+                        <p class="text-xs text-gray-500">จัดการข้อมูลผู้ชำระเงิน ไอคอนน่ารัก ยอดเงินมาตรฐาน และรอบชำระประจำ</p>
+                    </div>
+                    <button onclick="openPayerModal()" class="sanrio-btn bg-pink-400 text-white font-semibold px-4 py-2 rounded-2xl text-xs flex items-center gap-1.5">
+                        <i class="fa-solid fa-user-plus"></i> เพิ่มคนใหม่
+                    </button>
+                </div>
+
+                <div id="payersGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic Payers List -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL: ADD / EDIT PAYER -->
+    <div id="payerModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="sanrio-card bg-white rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
+            <button onclick="closePayerModal()" class="absolute top-4 right-4 text-gray-400 hover:text-pink-500 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 id="payerModalTitle" class="text-lg font-bold text-pink-600 mb-4 flex items-center gap-2">
+                🐰 เพิ่มผู้จ่ายเงินใหม่
+            </h3>
+
+            <form id="payerForm" onsubmit="handlePayerFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="payerId">
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-2">เลือกไอคอน/อวตารน่ารัก</label>
+                    <div id="avatarOptions" class="flex flex-wrap gap-2">
+                        <!-- Rendered by JS -->
+                    </div>
+                    <input type="hidden" id="payerAvatar" value="🐱">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">ชื่อผู้จ่ายเงิน <span class="text-red-400">*</span></label>
+                    <input type="text" id="payerName" required placeholder="เช่น น้องโบว์, พี่มายด์" class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">รอบจ่ายประจำ</label>
+                        <select id="payerCycle" class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer">
+                            <option value="daily">รายวัน (Daily)</option>
+                            <option value="weekly">รายสัปดาห์ (Weekly)</option>
+                            <option value="monthly">รายเดือน (Monthly)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">ยอดเงินมาตรฐาน (บาท)</label>
+                        <input type="number" id="payerDefaultAmount" min="0" step="1" placeholder="100" class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closePayerModal()" class="px-4 py-2 rounded-2xl bg-gray-100 text-gray-600 text-xs font-medium hover:bg-gray-200">ยกเลิก</button>
+                    <button type="submit" class="sanrio-btn px-5 py-2 rounded-2xl bg-pink-400 text-white text-xs font-semibold">บันทึกข้อมูล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD / EDIT PAYMENT RECORD -->
+    <div id="paymentModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="sanrio-card bg-white rounded-3xl w-full max-w-md p-6 relative shadow-2xl">
+            <button onclick="closePaymentModal()" class="absolute top-4 right-4 text-gray-400 hover:text-pink-500 text-lg">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <h3 id="paymentModalTitle" class="text-lg font-bold text-pink-600 mb-4 flex items-center gap-2">
+                🍓 บันทึกการจ่ายเงิน
+            </h3>
+
+            <form id="paymentForm" onsubmit="handlePaymentFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="paymentId">
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">ผู้จ่ายเงิน <span class="text-red-400">*</span></label>
+                    <select id="paymentPayerSelect" required onchange="handlePayerSelectionChange(this.value)" class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer">
+                        <option value="">-- เลือกสมาชิก --</option>
+                    </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">รอบการชำระ</label>
+                        <select id="paymentCycle" class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer">
+                            <option value="daily">รายวัน (Daily)</option>
+                            <option value="weekly">รายสัปดาห์ (Weekly)</option>
+                            <option value="monthly">รายเดือน (Monthly)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">จำนวนเงิน (บาท)</label>
+                        <input type="number" id="paymentAmount" min="0" step="1" required class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">วันที่ทำรายการ</label>
+                        <input type="date" id="paymentDate" required class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-600 mb-1">สถานะ</label>
+                        <select id="paymentStatus" class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400 bg-white cursor-pointer">
+                            <option value="paid">จ่ายแล้ว ✅</option>
+                            <option value="unpaid">ยังไม่จ่าย ⏳</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-gray-600 mb-1">หมายเหตุ (ถ้ามี)</label>
+                    <input type="text" id="paymentNote" placeholder="เช่น โอนผ่านธนาคาร, ติดไว้ก่อน" class="w-full px-3.5 py-2.5 rounded-2xl border-2 border-pink-200 text-xs focus:outline-none focus:border-pink-400">
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="closePaymentModal()" class="px-4 py-2 rounded-2xl bg-gray-100 text-gray-600 text-xs font-medium hover:bg-gray-200">ยกเลิก</button>
+                    <button type="submit" class="sanrio-btn px-5 py-2 rounded-2xl bg-sanrio-mintDark text-white text-xs font-semibold">บันทึกรายการ</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CUSTOM CONFIRM MODAL -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="sanrio-card bg-white rounded-3xl w-full max-w-sm p-6 text-center shadow-2xl">
+            <div id="confirmIcon" class="text-4xl mb-2">❓</div>
+            <h4 id="confirmTitle" class="text-base font-bold text-gray-700 mb-1">ยืนยันการทำรายการ</h4>
+            <p id="confirmMessage" class="text-xs text-gray-500 mb-6">คุณแน่ใจหรือไม่ที่ต้องการดำเนินการ?</p>
+            <div class="flex justify-center gap-3">
+                <button id="confirmCancelBtn" class="px-4 py-2 rounded-2xl bg-gray-100 text-gray-600 text-xs font-medium hover:bg-gray-200">ยกเลิก</button>
+                <button id="confirmOkBtn" class="sanrio-btn px-5 py-2 rounded-2xl bg-pink-400 text-white text-xs font-semibold">ตกลง</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="sanrio-card bg-white border-2 border-pink-300 px-5 py-3 rounded-2xl shadow-xl flex items-center gap-3">
+            <span id="toastIcon" class="text-xl">✨</span>
+            <span id="toastMessage" class="text-xs font-semibold text-gray-700">ทำรายการเรียบร้อย</span>
+        </div>
+    </div>
+
+    <!-- FIREBASE & APPLICATION LOGIC -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { 
+            getAuth, 
+            signInWithCustomToken, 
+            signInAnonymously, 
+            onAuthStateChanged 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { 
+            getFirestore, 
+            collection, 
+            doc, 
+            setDoc, 
+            addDoc, 
+            updateDoc, 
+            deleteDoc, 
+            onSnapshot 
+        } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Variables
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'sanrio-payment-tracker-default';
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+
+        const AVATARS = ['🐱', '🐰', '🐻', '🐸', '🐥', '🐶', '🐼', '🦄', '🦊', '🐹', '🐷', '🐨'];
+
+        let payers = [];
+        let payments = [];
+        let currentTab = 'dashboard';
+        let currentMonth = new Date().toISOString().substring(0, 7); // "YYYY-MM"
+        let currentDailyDate = new Date().toISOString().substring(0, 10); // "YYYY-MM-DD"
+        let currentSelectedWeek = 1;
+
+        let chartCycleInstance = null;
+        let chartStatusInstance = null;
+
+        // Initialize App & Firebase
+        window.addEventListener('load', async () => {
+            document.getElementById('globalMonthPicker').value = currentMonth;
+            document.getElementById('dailyDatePicker').value = currentDailyDate;
+            document.getElementById('globalMonthPicker').onchange = (e) => handleMonthChange(e.target.value);
+            document.getElementById('dailyDatePicker').onchange = (e) => renderDailyView();
+
+            renderAvatarOptions();
+
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                try {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    const app = initializeApp(firebaseConfig);
+                    auth = getAuth(app);
+                    db = getFirestore(app);
+
+                    // Auth Setup
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
+                    }
+
+                    onAuthStateChanged(auth, (user) => {
+                        currentUser = user;
+                        if (user) {
+                            setupRealtimeListeners();
+                        }
+                    });
+                } catch (err) {
+                    console.error("Firebase Auth Error:", err);
+                    loadFallbackLocalStorage();
+                }
+            } else {
+                // Fallback Local Storage Mode
+                loadFallbackLocalStorage();
+            }
+
+            switchTab('dashboard');
+        });
+
+        // Realtime Listeners (RULE 1 & RULE 2)
+        function setupRealtimeListeners() {
+            if (!currentUser || !db) return;
+
+            // Public Collection Path: artifacts/{appId}/public/data/payers
+            const payersRef = collection(db, 'artifacts', appId, 'public', 'data', 'payers');
+            onSnapshot(payersRef, (snapshot) => {
+                payers = snapshot.docs.map(docSnap => ({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                }));
+                
+                // If cloud database is empty, seed initial sample data
+                if (payers.length === 0 && payments.length === 0) {
+                    seedInitialCloudData();
+                }
+
+                renderCurrentView();
+            }, (error) => {
+                console.error("Payers realtime listener error:", error);
+            });
+
+            // Public Collection Path: artifacts/{appId}/public/data/payments
+            const paymentsRef = collection(db, 'artifacts', appId, 'public', 'data', 'payments');
+            onSnapshot(paymentsRef, (snapshot) => {
+                payments = snapshot.docs.map(docSnap => ({
+                    id: docSnap.id,
+                    ...docSnap.data()
+                }));
+                renderCurrentView();
+            }, (error) => {
+                console.error("Payments realtime listener error:", error);
+            });
+        }
+
+        function loadFallbackLocalStorage() {
+            const savedPayers = localStorage.getItem('sanrio_payers');
+            const savedPayments = localStorage.getItem('sanrio_payments');
+            payers = savedPayers ? JSON.parse(savedPayers) : [];
+            payments = savedPayments ? JSON.parse(savedPayments) : [];
+            const badge = document.getElementById('syncStatusBadge');
+            if (badge) {
+                badge.className = "inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-700";
+                badge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-500"></span> ออฟไลน์ (LocalStorage)`;
+            }
+            renderCurrentView();
+        }
+
+        async function seedInitialCloudData() {
+            const samplePayers = [
+                { id: 'p1', name: 'น้องโบว์', avatar: '🐰', cycle: 'daily', defaultAmount: 50 },
+                { id: 'p2', name: 'พี่มายด์', avatar: '🐱', cycle: 'weekly', defaultAmount: 300 },
+                { id: 'p3', name: 'คุณพาย', avatar: '🐻', cycle: 'monthly', defaultAmount: 1200 },
+                { id: 'p4', name: 'น้องต้นกล้า', avatar: '🐸', cycle: 'daily', defaultAmount: 40 },
+                { id: 'p5', name: 'พี่ฝน', avatar: '🦊', cycle: 'weekly', defaultAmount: 250 }
+            ];
+
+            const nowStr = currentMonth;
+            const samplePayments = [
+                { id: 'pm1', payerId: 'p1', payerName: 'น้องโบว์', amount: 50, date: `${nowStr}-01`, cycle: 'daily', status: 'paid', note: 'โอนแล้ว' },
+                { id: 'pm2', payerId: 'p1', payerName: 'น้องโบว์', amount: 50, date: `${nowStr}-02`, cycle: 'daily', status: 'paid', note: '' },
+                { id: 'pm3', payerId: 'p4', payerName: 'น้องต้นกล้า', amount: 40, date: `${nowStr}-01`, cycle: 'daily', status: 'unpaid', note: 'ขอติดไว้ก่อน' },
+                { id: 'pm4', payerId: 'p2', payerName: 'พี่มายด์', amount: 300, date: `${nowStr}-05`, cycle: 'weekly', status: 'paid', note: 'สัปดาห์ที่ 1' },
+                { id: 'pm5', payerId: 'p5', payerName: 'พี่ฝน', amount: 250, date: `${nowStr}-07`, cycle: 'weekly', status: 'unpaid', note: 'สัปดาห์ที่ 1' },
+                { id: 'pm6', payerId: 'p3', payerName: 'คุณพาย', amount: 1200, date: `${nowStr}-10`, cycle: 'monthly', status: 'paid', note: 'จ่ายรายเดือนล่วงหน้า' }
+            ];
+
+            if (db && currentUser) {
+                for (let p of samplePayers) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payers', p.id), p);
+                }
+                for (let pm of samplePayments) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', pm.id), pm);
+                }
+            }
+        }
+
+        // NAVIGATION & TAB SWITCHING
+        window.switchTab = function(tabId) {
+            currentTab = tabId;
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('sanrio-tab-active'));
+            document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
+
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) activeBtn.classList.add('sanrio-tab-active');
+
+            const activeView = document.getElementById(`view-${tabId}`);
+            if (activeView) activeView.classList.remove('hidden');
+
+            renderCurrentView();
+        }
+
+        function handleMonthChange(val) {
+            currentMonth = val;
+            renderCurrentView();
+        }
+
+        function renderCurrentView() {
+            populatePayerDropdowns();
+            if (currentTab === 'dashboard') renderDashboardView();
+            else if (currentTab === 'daily') renderDailyView();
+            else if (currentTab === 'weekly') renderWeeklyView();
+            else if (currentTab === 'monthly') renderMonthlyView();
+            else if (currentTab === 'history') renderHistoryTable();
+            else if (currentTab === 'payers') renderPayersView();
+        }
+
+        // --- DASHBOARD VIEW ---
+        function renderDashboardView() {
+            const monthPayments = payments.filter(p => p.date && p.date.startsWith(currentMonth));
+            
+            const totalPaid = monthPayments.filter(p => p.status === 'paid').reduce((sum, p) => sum + Number(p.amount), 0);
+            const totalUnpaid = monthPayments.filter(p => p.status === 'unpaid').reduce((sum, p) => sum + Number(p.amount), 0);
+            const targetTotal = totalPaid + totalUnpaid;
+
+            const unpaidCount = monthPayments.filter(p => p.status === 'unpaid').length;
+            const paidCount = monthPayments.filter(p => p.status === 'paid').length;
+            const totalRecords = monthPayments.length;
+
+            document.getElementById('dashTotalPaid').innerText = `฿${totalPaid.toLocaleString()}`;
+            document.getElementById('dashTotalUnpaid').innerText = `฿${totalUnpaid.toLocaleString()}`;
+            document.getElementById('dashTotalTarget').innerText = `฿${targetTotal.toLocaleString()}`;
+            document.getElementById('dashUnpaidCount').innerText = `${unpaidCount} รายการ`;
+
+            document.getElementById('dashPaidHeadcount').innerText = `${paidCount} / ${totalRecords} รายการ`;
+            const percent = totalRecords > 0 ? Math.round((paidCount / totalRecords) * 100) : 0;
+            document.getElementById('dashProgressBar').style.width = `${percent}%`;
+
+            document.getElementById('dashPayerTotal').innerText = `${payers.length} คน`;
+            document.getElementById('cntDaily').innerText = payers.filter(p => p.cycle === 'daily').length;
+            document.getElementById('cntWeekly').innerText = payers.filter(p => p.cycle === 'weekly').length;
+            document.getElementById('cntMonthly').innerText = payers.filter(p => p.cycle === 'monthly').length;
+
+            renderDashboardCharts(monthPayments);
+        }
+
+        function renderDashboardCharts(monthPayments) {
+            const paidDaily = monthPayments.filter(p => p.cycle === 'daily' && p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
+            const paidWeekly = monthPayments.filter(p => p.cycle === 'weekly' && p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
+            const paidMonthly = monthPayments.filter(p => p.cycle === 'monthly' && p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
+
+            const ctx1 = document.getElementById('chartCycleSummary').getContext('2d');
+            if (chartCycleInstance) chartCycleInstance.destroy();
+
+            chartCycleInstance = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: ['รายวัน', 'รายสัปดาห์', 'รายเดือน'],
+                    datasets: [{
+                        label: 'ยอดชำระแล้ว (บาท)',
+                        data: [paidDaily, paidWeekly, paidMonthly],
+                        backgroundColor: ['#FFB7C5', '#D0E1FD', '#E2D4F9'],
+                        borderColor: ['#FF758F', '#6C9BCF', '#9D4EDD'],
+                        borderWidth: 2,
+                        borderRadius: 12
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#FFF0F3' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+
+            const totalPaid = monthPayments.filter(p => p.status === 'paid').reduce((s, p) => s + Number(p.amount), 0);
+            const totalUnpaid = monthPayments.filter(p => p.status === 'unpaid').reduce((s, p) => s + Number(p.amount), 0);
+
+            const ctx2 = document.getElementById('chartStatusSummary').getContext('2d');
+            if (chartStatusInstance) chartStatusInstance.destroy();
+
+            chartStatusInstance = new Chart(ctx2, {
+                type: 'doughnut',
+                data: {
+                    labels: ['จ่ายแล้ว (บาท)', 'ยังไม่จ่าย (บาท)'],
+                    datasets: [{
+                        data: [totalPaid, totalUnpaid],
+                        backgroundColor: ['#52B788', '#FF758F'],
+                        borderWidth: 3,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // --- DAILY TRACKER ---
+        function renderDailyView() {
+            const dateVal = document.getElementById('dailyDatePicker').value || currentDailyDate;
+            currentDailyDate = dateVal;
+
+            const grid = document.getElementById('dailyGrid');
+            grid.innerHTML = '';
+
+            const dailyPayers = payers.filter(p => p.cycle === 'daily');
+
+            if (dailyPayers.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full sanrio-card rounded-3xl p-8 text-center text-gray-400">
+                        <span class="text-4xl">🐱</span>
+                        <p class="mt-2 text-xs font-semibold">ยังไม่มีสมาชิกประเภท "รายวัน"</p>
+                        <button onclick="openPayerModal()" class="mt-3 sanrio-btn text-xs bg-pink-400 text-white px-4 py-2 rounded-2xl">
+                            + เพิ่มสมาชิกรายวัน
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            dailyPayers.forEach(payer => {
+                const record = payments.find(p => p.payerId === payer.id && p.date === dateVal && p.cycle === 'daily');
+                const isPaid = record && record.status === 'paid';
+                const currentAmt = record ? record.amount : payer.defaultAmount;
+                const note = record ? record.note : '';
+
+                const cardHtml = `
+                    <div class="sanrio-card rounded-3xl p-4 flex flex-col justify-between transition-all hover:scale-[1.01] ${isPaid ? 'border-emerald-300 bg-emerald-50/30' : 'border-pink-200'}">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl p-2 bg-pink-100 rounded-2xl shadow-inner">${payer.avatar}</span>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-sm">${payer.name}</h4>
+                                    <span class="text-[10px] text-pink-500 bg-pink-100 px-2 py-0.5 rounded-full font-medium">รายวัน</span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold px-3 py-1 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-pink-100 text-pink-700'}">
+                                ${isPaid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ⏳'}
+                            </span>
+                        </div>
+
+                        <div class="space-y-2 mb-4 text-xs text-gray-600 bg-white/60 p-3 rounded-2xl border border-pink-100">
+                            <div class="flex justify-between items-center">
+                                <span>ยอดเงินประจำวัน:</span>
+                                <span class="font-bold text-gray-800 text-sm">฿${currentAmt}</span>
+                            </div>
+                            ${note ? `<div class="text-[11px] text-gray-500 italic">📌 ${note}</div>` : ''}
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="toggleDailyStatus('${payer.id}', '${dateVal}', ${currentAmt})" 
+                                class="sanrio-btn flex-1 py-2 rounded-2xl text-xs font-semibold transition-all ${isPaid ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-pink-400 hover:bg-pink-500 text-white'}">
+                                ${isPaid ? '<i class="fa-solid fa-check"></i> จ่ายแล้ว (คลิกเปลี่ยน)' : '<i class="fa-solid fa-hand-holding-dollar"></i> ติ๊กจ่ายเงิน'}
+                            </button>
+                            <button onclick="openPaymentModalForPayer('${payer.id}', '${dateVal}', 'daily')" 
+                                class="sanrio-btn px-3 py-2 bg-white border border-pink-200 text-gray-600 rounded-2xl text-xs hover:bg-pink-50">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        window.toggleDailyStatus = async function(payerId, dateStr, defaultAmt) {
+            let record = payments.find(p => p.payerId === payerId && p.date === dateStr && p.cycle === 'daily');
+            const payer = payers.find(p => p.id === payerId);
+
+            if (record) {
+                const newStatus = record.status === 'paid' ? 'unpaid' : 'paid';
+                if (db && currentUser) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', record.id), { status: newStatus });
+                } else {
+                    record.status = newStatus;
+                    saveFallbackLocalStorage();
+                }
+                if (newStatus === 'paid') triggerConfetti();
+            } else {
+                const newId = 'pm_' + Date.now();
+                const newRec = {
+                    id: newId,
+                    payerId: payerId,
+                    payerName: payer ? payer.name : '',
+                    amount: defaultAmt,
+                    date: dateStr,
+                    cycle: 'daily',
+                    status: 'paid',
+                    note: 'จ่ายรายวัน'
+                };
+                if (db && currentUser) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', newId), newRec);
+                } else {
+                    payments.push(newRec);
+                    saveFallbackLocalStorage();
+                }
+                triggerConfetti();
+            }
+            showToast('✨ ซิงค์สถานะคลาวด์เรียบร้อย!');
+        };
+
+        // --- WEEKLY TRACKER ---
+        window.setWeeklySubWeek = function(wk) {
+            currentSelectedWeek = wk;
+            document.querySelectorAll('.wk-btn').forEach(b => {
+                if (parseInt(b.dataset.week) === wk) {
+                    b.className = 'wk-btn text-xs font-semibold px-3 py-1.5 rounded-xl transition-all bg-pink-400 text-white shadow-sm';
+                } else {
+                    b.className = 'wk-btn text-xs font-semibold px-3 py-1.5 rounded-xl transition-all bg-white text-gray-600 hover:bg-pink-100';
+                }
+            });
+            renderWeeklyView();
+        }
+
+        function renderWeeklyView() {
+            setWeeklySubWeek(currentSelectedWeek);
+            const grid = document.getElementById('weeklyGrid');
+            grid.innerHTML = '';
+
+            const weeklyPayers = payers.filter(p => p.cycle === 'weekly');
+
+            if (weeklyPayers.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full sanrio-card rounded-3xl p-8 text-center text-gray-400">
+                        <span class="text-4xl">🐰</span>
+                        <p class="mt-2 text-xs font-semibold">ยังไม่มีสมาชิกประเภท "รายสัปดาห์"</p>
+                        <button onclick="openPayerModal()" class="mt-3 sanrio-btn text-xs bg-pink-400 text-white px-4 py-2 rounded-2xl">
+                            + เพิ่มสมาชิกรายสัปดาห์
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            const weekLabel = `สัปดาห์ที่ ${currentSelectedWeek} ของ ${currentMonth}`;
+
+            weeklyPayers.forEach(payer => {
+                const record = payments.find(p => p.payerId === payer.id && p.cycle === 'weekly' && p.date.startsWith(currentMonth));
+                const isPaid = record && record.status === 'paid';
+                const currentAmt = record ? record.amount : payer.defaultAmount;
+
+                const cardHtml = `
+                    <div class="sanrio-card rounded-3xl p-4 flex flex-col justify-between transition-all hover:scale-[1.01] ${isPaid ? 'border-emerald-300 bg-emerald-50/30' : 'border-blue-200'}">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl p-2 bg-blue-100 rounded-2xl shadow-inner">${payer.avatar}</span>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-sm">${payer.name}</h4>
+                                    <span class="text-[10px] text-blue-500 bg-blue-100 px-2 py-0.5 rounded-full font-medium">${weekLabel}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold px-3 py-1 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-pink-100 text-pink-700'}">
+                                ${isPaid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ⏳'}
+                            </span>
+                        </div>
+
+                        <div class="space-y-2 mb-4 text-xs text-gray-600 bg-white/60 p-3 rounded-2xl border border-blue-100">
+                            <div class="flex justify-between items-center">
+                                <span>ยอดเงินรายสัปดาห์:</span>
+                                <span class="font-bold text-gray-800 text-sm">฿${currentAmt}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="toggleWeeklyStatus('${payer.id}', ${currentSelectedWeek}, ${currentAmt})" 
+                                class="sanrio-btn flex-1 py-2 rounded-2xl text-xs font-semibold transition-all ${isPaid ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-blue-400 hover:bg-blue-500 text-white'}">
+                                ${isPaid ? '<i class="fa-solid fa-check"></i> จ่ายแล้ว (คลิกเปลี่ยน)' : '<i class="fa-solid fa-hand-holding-dollar"></i> ติ๊กจ่ายสัปดาห์นี้'}
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        window.toggleWeeklyStatus = async function(payerId, weekNum, defaultAmt) {
+            const payer = payers.find(p => p.id === payerId);
+            let record = payments.find(p => p.payerId === payerId && p.cycle === 'weekly' && p.date.startsWith(currentMonth));
+
+            if (record) {
+                const newStatus = record.status === 'paid' ? 'unpaid' : 'paid';
+                if (db && currentUser) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', record.id), { status: newStatus });
+                } else {
+                    record.status = newStatus;
+                    saveFallbackLocalStorage();
+                }
+                if (newStatus === 'paid') triggerConfetti();
+            } else {
+                const newId = 'pm_' + Date.now();
+                const newRec = {
+                    id: newId,
+                    payerId: payerId,
+                    payerName: payer ? payer.name : '',
+                    amount: defaultAmt,
+                    date: `${currentMonth}-01`,
+                    cycle: 'weekly',
+                    status: 'paid',
+                    note: `จ่ายรายสัปดาห์ที่ ${weekNum}`
+                };
+                if (db && currentUser) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', newId), newRec);
+                } else {
+                    payments.push(newRec);
+                    saveFallbackLocalStorage();
+                }
+                triggerConfetti();
+            }
+            showToast('✨ ซิงค์สถานะการจ่ายสัปดาห์แล้ว!');
+        };
+
+        // --- MONTHLY TRACKER ---
+        function renderMonthlyView() {
+            const grid = document.getElementById('monthlyGrid');
+            grid.innerHTML = '';
+
+            const monthlyPayers = payers.filter(p => p.cycle === 'monthly');
+
+            if (monthlyPayers.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full sanrio-card rounded-3xl p-8 text-center text-gray-400">
+                        <span class="text-4xl">🐻</span>
+                        <p class="mt-2 text-xs font-semibold">ยังไม่มีสมาชิกประเภท "รายเดือน"</p>
+                        <button onclick="openPayerModal()" class="mt-3 sanrio-btn text-xs bg-pink-400 text-white px-4 py-2 rounded-2xl">
+                            + เพิ่มสมาชิกรายเดือน
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            monthlyPayers.forEach(payer => {
+                const record = payments.find(p => p.payerId === payer.id && p.cycle === 'monthly' && p.date.startsWith(currentMonth));
+                const isPaid = record && record.status === 'paid';
+                const currentAmt = record ? record.amount : payer.defaultAmount;
+                const note = record ? record.note : '';
+
+                const cardHtml = `
+                    <div class="sanrio-card rounded-3xl p-5 flex flex-col justify-between transition-all hover:scale-[1.01] ${isPaid ? 'border-emerald-300 bg-emerald-50/30' : 'border-purple-200'}">
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl p-2 bg-purple-100 rounded-2xl shadow-inner">${payer.avatar}</span>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-base">${payer.name}</h4>
+                                    <span class="text-[10px] text-purple-600 bg-purple-100 px-2 py-0.5 rounded-full font-medium">รายเดือนประจำ ${currentMonth}</span>
+                                </div>
+                            </div>
+                            <span class="text-xs font-extrabold px-3 py-1 rounded-full ${isPaid ? 'bg-emerald-100 text-emerald-700' : 'bg-pink-100 text-pink-700'}">
+                                ${isPaid ? 'จ่ายแล้ว ✅' : 'ยังไม่จ่าย ⏳'}
+                            </span>
+                        </div>
+
+                        <div class="space-y-2 mb-4 text-xs text-gray-600 bg-white/70 p-3.5 rounded-2xl border border-purple-100">
+                            <div class="flex justify-between items-center">
+                                <span>ยอดประจำเดือน:</span>
+                                <span class="font-bold text-purple-700 text-base">฿${currentAmt.toLocaleString()}</span>
+                            </div>
+                            ${note ? `<div class="text-[11px] text-gray-500 italic">📌 ${note}</div>` : ''}
+                        </div>
+
+                        <div class="flex gap-2">
+                            <button onclick="toggleMonthlyStatus('${payer.id}', ${currentAmt})" 
+                                class="sanrio-btn flex-1 py-2.5 rounded-2xl text-xs font-semibold transition-all ${isPaid ? 'bg-emerald-500 hover:bg-emerald-600 text-white' : 'bg-purple-500 hover:bg-purple-600 text-white'}">
+                                ${isPaid ? '<i class="fa-solid fa-check"></i> จ่ายแล้ว (คลิกเปลี่ยน)' : '<i class="fa-solid fa-hand-holding-dollar"></i> ติ๊กจ่ายรายเดือน'}
+                            </button>
+                            <button onclick="openPaymentModalForPayer('${payer.id}', '${currentMonth}-01', 'monthly')" 
+                                class="sanrio-btn px-3.5 py-2.5 bg-white border border-purple-200 text-gray-600 rounded-2xl text-xs hover:bg-purple-50">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        window.toggleMonthlyStatus = async function(payerId, defaultAmt) {
+            const payer = payers.find(p => p.id === payerId);
+            let record = payments.find(p => p.payerId === payerId && p.cycle === 'monthly' && p.date.startsWith(currentMonth));
+
+            if (record) {
+                const newStatus = record.status === 'paid' ? 'unpaid' : 'paid';
+                if (db && currentUser) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', record.id), { status: newStatus });
+                } else {
+                    record.status = newStatus;
+                    saveFallbackLocalStorage();
+                }
+                if (newStatus === 'paid') triggerConfetti();
+            } else {
+                const newId = 'pm_' + Date.now();
+                const newRec = {
+                    id: newId,
+                    payerId: payerId,
+                    payerName: payer ? payer.name : '',
+                    amount: defaultAmt,
+                    date: `${currentMonth}-01`,
+                    cycle: 'monthly',
+                    status: 'paid',
+                    note: 'จ่ายรายเดือน'
+                };
+                if (db && currentUser) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', newId), newRec);
+                } else {
+                    payments.push(newRec);
+                    saveFallbackLocalStorage();
+                }
+                triggerConfetti();
+            }
+            showToast('✨ อัปเดตรายเดือนผ่านคลาวด์แล้ว!');
+        };
+
+        // --- HISTORY TABLE ---
+        window.renderHistoryTable = function() {
+            const tbody = document.getElementById('historyTableBody');
+            tbody.innerHTML = '';
+
+            const searchKey = document.getElementById('historySearchInput').value.toLowerCase().trim();
+            const cycleKey = document.getElementById('historyCycleFilter').value;
+            const statusKey = document.getElementById('historyStatusFilter').value;
+
+            let filtered = payments.filter(p => {
+                const matchSearch = (p.payerName || '').toLowerCase().includes(searchKey) || (p.note && p.note.toLowerCase().includes(searchKey));
+                const matchCycle = cycleKey === 'all' || p.cycle === cycleKey;
+                const matchStatus = statusKey === 'all' || p.status === statusKey;
+                return matchSearch && matchCycle && matchStatus;
+            });
+
+            filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="p-8 text-center text-gray-400">
+                            <span class="text-3xl">🔍</span>
+                            <p class="mt-1 text-xs">ไม่พบข้อมูลประวัติการจ่ายเงิน</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const cycleBadge = item.cycle === 'daily' ? '<span class="px-2 py-0.5 rounded-full bg-pink-100 text-pink-600 font-semibold">รายวัน</span>' :
+                                   item.cycle === 'weekly' ? '<span class="px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 font-semibold">รายสัปดาห์</span>' :
+                                   '<span class="px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 font-semibold">รายเดือน</span>';
+
+                const statusBadge = item.status === 'paid' ? '<span class="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 font-bold">จ่ายแล้ว ✅</span>' :
+                                    '<span class="px-2.5 py-1 rounded-full bg-pink-100 text-pink-700 font-bold">ยังไม่จ่าย ⏳</span>';
+
+                const tr = `
+                    <tr class="hover:bg-pink-50/50 transition-colors">
+                        <td class="p-3.5 pl-5 font-bold text-gray-800">${item.payerName || 'ไม่ระบุชื่อ'}</td>
+                        <td class="p-3.5">${cycleBadge}</td>
+                        <td class="p-3.5 font-medium text-gray-600">${item.date}</td>
+                        <td class="p-3.5 text-right font-extrabold text-pink-600">฿${Number(item.amount).toLocaleString()}</td>
+                        <td class="p-3.5 text-center">${statusBadge}</td>
+                        <td class="p-3.5 text-gray-500 max-w-xs truncate">${item.note || '-'}</td>
+                        <td class="p-3.5 text-center pr-5 space-x-1">
+                            <button onclick="editPaymentRecord('${item.id}')" class="px-2.5 py-1.5 bg-pink-100 hover:bg-pink-200 text-pink-600 rounded-xl transition-all">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deletePaymentRecord('${item.id}')" class="px-2.5 py-1.5 bg-red-100 hover:bg-red-200 text-red-500 rounded-xl transition-all">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+                tbody.insertAdjacentHTML('beforeend', tr);
+            });
+        };
+
+        // --- PAYERS VIEW ---
+        function renderPayersView() {
+            const grid = document.getElementById('payersGrid');
+            grid.innerHTML = '';
+
+            if (payers.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full sanrio-card rounded-3xl p-8 text-center text-gray-400">
+                        <span class="text-4xl">🐱</span>
+                        <p class="mt-2 text-xs font-semibold">ยังไม่มีสมาชิกในระบบ กรุณาคลิกเพิ่มสมาชิก</p>
+                    </div>
+                `;
+                return;
+            }
+
+            payers.forEach(payer => {
+                const cycleText = payer.cycle === 'daily' ? 'รายวัน' : payer.cycle === 'weekly' ? 'รายสัปดาห์' : 'รายเดือน';
+
+                const cardHtml = `
+                    <div class="sanrio-card rounded-3xl p-5 flex items-center justify-between border-2 border-pink-200 hover:scale-[1.01] transition-all">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-2xl bg-pink-100 border border-pink-300 flex items-center justify-center text-2xl shadow-inner">
+                                ${payer.avatar}
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-gray-800 text-base">${payer.name}</h4>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-[10px] bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-medium">รอบ ${cycleText}</span>
+                                    <span class="text-xs text-gray-500 font-semibold">฿${payer.defaultAmount}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-1">
+                            <button onclick="editPayer('${payer.id}')" class="w-8 h-8 rounded-xl bg-pink-50 hover:bg-pink-100 text-pink-500 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
+                            <button onclick="deletePayer('${payer.id}')" class="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-400 flex items-center justify-center text-xs">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        // --- AVATAR & PAYER MODAL ---
+        function renderAvatarOptions() {
+            const container = document.getElementById('avatarOptions');
+            container.innerHTML = '';
+            AVATARS.forEach(av => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'w-9 h-9 rounded-xl border border-pink-200 flex items-center justify-center text-xl hover:bg-pink-100 transition-all avatar-opt-btn';
+                btn.innerText = av;
+                btn.onclick = () => selectAvatar(av, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function selectAvatar(avatarEmoji, btnElement) {
+            document.querySelectorAll('.avatar-opt-btn').forEach(b => b.classList.remove('bg-pink-300', 'border-pink-500', 'scale-110'));
+            if (btnElement) btnElement.classList.add('bg-pink-300', 'border-pink-500', 'scale-110');
+            document.getElementById('payerAvatar').value = avatarEmoji;
+        }
+
+        window.openPayerModal = function(payerId = null) {
+            document.getElementById('payerForm').reset();
+            document.getElementById('payerId').value = '';
+            document.getElementById('payerModalTitle').innerText = payerId ? '✏️ แก้ไขข้อมูลผู้จ่ายเงิน' : '🐰 เพิ่มผู้จ่ายเงินใหม่';
+
+            if (payerId) {
+                const payer = payers.find(p => p.id === payerId);
+                if (payer) {
+                    document.getElementById('payerId').value = payer.id;
+                    document.getElementById('payerName').value = payer.name;
+                    document.getElementById('payerCycle').value = payer.cycle;
+                    document.getElementById('payerDefaultAmount').value = payer.defaultAmount;
+                    document.getElementById('payerAvatar').value = payer.avatar;
+                }
+            } else {
+                selectAvatar('🐱', document.querySelector('.avatar-opt-btn'));
+            }
+
+            document.getElementById('payerModal').classList.remove('hidden');
+        };
+
+        window.closePayerModal = function() {
+            document.getElementById('payerModal').classList.add('hidden');
+        };
+
+        window.handlePayerFormSubmit = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('payerId').value;
+            const name = document.getElementById('payerName').value.trim();
+            const cycle = document.getElementById('payerCycle').value;
+            const defaultAmount = Number(document.getElementById('payerDefaultAmount').value) || 0;
+            const avatar = document.getElementById('payerAvatar').value || '🐱';
+
+            if (id) {
+                const updatedData = { name, cycle, defaultAmount, avatar };
+                if (db && currentUser) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payers', id), updatedData);
+                } else {
+                    const idx = payers.findIndex(p => p.id === id);
+                    if (idx !== -1) payers[idx] = { id, ...updatedData };
+                    saveFallbackLocalStorage();
+                }
+            } else {
+                const newId = 'p_' + Date.now();
+                const newPayer = { id: newId, name, cycle, defaultAmount, avatar };
+                if (db && currentUser) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payers', newId), newPayer);
+                } else {
+                    payers.push(newPayer);
+                    saveFallbackLocalStorage();
+                }
+            }
+
+            closePayerModal();
+            showToast('✨ บันทึกข้อมูลสมาชิกสำเร็จ!');
+        };
+
+        window.editPayer = function(id) {
+            openPayerModal(id);
+        };
+
+        window.deletePayer = function(id) {
+            const payer = payers.find(p => p.id === id);
+            showCustomConfirm('🗑️ ยืนยันการลบสมาชิก', `คุณต้องการลบคุณ "${payer ? payer.name : ''}" ออกจากคลาวด์ใช่หรือไม่?`, '🐱')
+                .then(async (confirmed) => {
+                    if (confirmed) {
+                        if (db && currentUser) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payers', id));
+                        } else {
+                            payers = payers.filter(p => p.id !== id);
+                            saveFallbackLocalStorage();
+                        }
+                        showToast('🗑️ ลบสมาชิกเรียบร้อยแล้ว');
+                    }
+                });
+        };
+
+        // --- PAYMENT MODAL & ACTIONS ---
+        function populatePayerDropdowns() {
+            const select = document.getElementById('paymentPayerSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">-- เลือกสมาชิก --</option>';
+            payers.forEach(p => {
+                select.insertAdjacentHTML('beforeend', `<option value="${p.id}">${p.avatar} ${p.name} (${p.cycle === 'daily' ? 'รายวัน' : p.cycle === 'weekly' ? 'รายสัปดาห์' : 'รายเดือน'})</option>`);
+            });
+        }
+
+        window.handlePayerSelectionChange = function(payerId) {
+            const payer = payers.find(p => p.id === payerId);
+            if (payer) {
+                document.getElementById('paymentCycle').value = payer.cycle;
+                document.getElementById('paymentAmount').value = payer.defaultAmount;
+            }
+        };
+
+        window.openPaymentModal = function(paymentId = null) {
+            populatePayerDropdowns();
+            document.getElementById('paymentForm').reset();
+            document.getElementById('paymentId').value = '';
+            document.getElementById('paymentDate').value = new Date().toISOString().substring(0, 10);
+            document.getElementById('paymentModalTitle').innerText = paymentId ? '✏️ แก้ไขรายการจ่ายเงิน' : '🍓 บันทึกการจ่ายเงิน';
+
+            if (paymentId) {
+                const rec = payments.find(p => p.id === paymentId);
+                if (rec) {
+                    document.getElementById('paymentId').value = rec.id;
+                    document.getElementById('paymentPayerSelect').value = rec.payerId;
+                    document.getElementById('paymentCycle').value = rec.cycle;
+                    document.getElementById('paymentAmount').value = rec.amount;
+                    document.getElementById('paymentDate').value = rec.date;
+                    document.getElementById('paymentStatus').value = rec.status;
+                    document.getElementById('paymentNote').value = rec.note || '';
+                }
+            }
+
+            document.getElementById('paymentModal').classList.remove('hidden');
+        };
+
+        window.openPaymentModalForPayer = function(payerId, defaultDate, cycleType) {
+            openPaymentModal();
+            document.getElementById('paymentPayerSelect').value = payerId;
+            handlePayerSelectionChange(payerId);
+            if (defaultDate) document.getElementById('paymentDate').value = defaultDate;
+            if (cycleType) document.getElementById('paymentCycle').value = cycleType;
+        };
+
+        window.closePaymentModal = function() {
+            document.getElementById('paymentModal').classList.add('hidden');
+        };
+
+        window.handlePaymentFormSubmit = async function(e) {
+            e.preventDefault();
+            const id = document.getElementById('paymentId').value;
+            const payerId = document.getElementById('paymentPayerSelect').value;
+            const payer = payers.find(p => p.id === payerId);
+            const cycle = document.getElementById('paymentCycle').value;
+            const amount = Number(document.getElementById('paymentAmount').value) || 0;
+            const date = document.getElementById('paymentDate').value;
+            const status = document.getElementById('paymentStatus').value;
+            const note = document.getElementById('paymentNote').value.trim();
+
+            const payload = {
+                payerId,
+                payerName: payer ? payer.name : '',
+                cycle,
+                amount,
+                date,
+                status,
+                note
+            };
+
+            if (id) {
+                if (db && currentUser) {
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', id), payload);
+                } else {
+                    const idx = payments.findIndex(p => p.id === id);
+                    if (idx !== -1) payments[idx] = { id, ...payload };
+                    saveFallbackLocalStorage();
+                }
+            } else {
+                const newId = 'pm_' + Date.now();
+                if (db && currentUser) {
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', newId), { id: newId, ...payload });
+                } else {
+                    payments.push({ id: newId, ...payload });
+                    saveFallbackLocalStorage();
+                }
+            }
+
+            if (status === 'paid') triggerConfetti();
+            closePaymentModal();
+            showToast('✨ บันทึกรายการชำระเงินเรียบร้อย!');
+        };
+
+        window.editPaymentRecord = function(id) {
+            openPaymentModal(id);
+        };
+
+        window.deletePaymentRecord = function(id) {
+            showCustomConfirm('🗑️ ลบรายการชำระเงิน', 'คุณแน่ใจหรือไม่ที่จะลบรายการชำระเงินนี้?', '🍓')
+                .then(async (confirmed) => {
+                    if (confirmed) {
+                        if (db && currentUser) {
+                            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', id));
+                        } else {
+                            payments = payments.filter(p => p.id !== id);
+                            saveFallbackLocalStorage();
+                        }
+                        showToast('🗑️ ลบรายการเรียบร้อย');
+                    }
+                });
+        };
+
+        // --- SHARE LINK ---
+        window.copyShareLink = function() {
+            const tempInput = document.createElement('input');
+            tempInput.value = window.location.href;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            try {
+                document.execCommand('copy');
+                showToast('🔗 คัดลอกลิงก์แชร์เรียบร้อยแล้ว!', '✨');
+            } catch (err) {
+                showToast('❌ ไม่สามารถคัดลอกลิงก์ได้', '⚠️');
+            }
+            document.body.removeChild(tempInput);
+        };
+
+        // --- EXPORT / IMPORT / CLEAR ---
+        window.toggleDataMenu = function() {
+            const menu = document.getElementById('dataMenu');
+            menu.classList.toggle('hidden');
+        };
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('dataMenu');
+            if (menu && !e.target.closest('#dataMenu') && !e.target.closest('button[onclick="toggleDataMenu()"]')) {
+                menu.classList.add('hidden');
+            }
+        });
+
+        window.exportJSON = function() {
+            const data = {
+                payers,
+                payments,
+                exportedAt: new Date().toISOString()
+            };
+            const jsonStr = JSON.stringify(data, null, 2);
+            const blob = new Blob([jsonStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `Sanrio_Payment_Cloud_Backup_${new Date().toISOString().substring(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('📦 ส่งออกไฟล์สำรองข้อมูล JSON สำเร็จ!');
+        };
+
+        window.triggerImportJSON = function() {
+            document.getElementById('importFileInput').click();
+        };
+
+        window.importJSON = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    if (parsed && Array.isArray(parsed.payers) && Array.isArray(parsed.payments)) {
+                        if (db && currentUser) {
+                            for (let p of parsed.payers) {
+                                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payers', p.id), p);
+                            }
+                            for (let pm of parsed.payments) {
+                                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', pm.id), pm);
+                            }
+                        } else {
+                            payers = parsed.payers;
+                            payments = parsed.payments;
+                            saveFallbackLocalStorage();
+                        }
+                        showToast('📥 นำเข้าข้อมูลคลาวด์สำเร็จแล้ว!');
+                    } else {
+                        showToast('❌ รูปแบบไฟล์ JSON ไม่ถูกต้อง');
+                    }
+                } catch (err) {
+                    showToast('❌ เกิดข้อผิดพลาดในการอ่านไฟล์ JSON');
+                }
+            };
+            reader.readAsText(file);
+        };
+
+        window.loadSampleData = function() {
+            seedInitialCloudData();
+            showToast('✨ โหลดข้อมูลตัวอย่างขึ้นคลาวด์เรียบร้อย!');
+        };
+
+        window.confirmClearAll = function() {
+            showCustomConfirm('⚠️ ล้างข้อมูลบนคลาวด์', 'คุณต้องการลบข้อมูลสมาชิกและรายการชำระทั้งหมดใช่หรือไม่?', '🗑️')
+                .then(async (confirmed) => {
+                    if (confirmed) {
+                        if (db && currentUser) {
+                            for (let p of payers) {
+                                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payers', p.id));
+                            }
+                            for (let pm of payments) {
+                                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'payments', pm.id));
+                            }
+                        } else {
+                            payers = [];
+                            payments = [];
+                            saveFallbackLocalStorage();
+                        }
+                        showToast('🗑️ ล้างข้อมูลเรียบร้อยแล้ว');
+                    }
+                });
+        };
+
+        function saveFallbackLocalStorage() {
+            localStorage.setItem('sanrio_payers', JSON.stringify(payers));
+            localStorage.setItem('sanrio_payments', JSON.stringify(payments));
+            renderCurrentView();
+        }
+
+        // --- TOAST & CONFIRM HELPERS ---
+        function showToast(message, icon = '✨') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMessage').innerText = message;
+            document.getElementById('toastIcon').innerText = icon;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+        function showCustomConfirm(title, message, icon = '❓') {
+            return new Promise((resolve) => {
+                document.getElementById('confirmTitle').innerText = title;
+                document.getElementById('confirmMessage').innerText = message;
+                document.getElementById('confirmIcon').innerText = icon;
+                
+                const modal = document.getElementById('confirmModal');
+                modal.classList.remove('hidden');
+
+                const okBtn = document.getElementById('confirmOkBtn');
+                const cancelBtn = document.getElementById('confirmCancelBtn');
+
+                const cleanup = () => {
+                    modal.classList.add('hidden');
+                    okBtn.removeEventListener('click', onOk);
+                    cancelBtn.removeEventListener('click', onCancel);
+                };
+
+                const onOk = () => { cleanup(); resolve(true); };
+                const onCancel = () => { cleanup(); resolve(false); };
+
+                okBtn.addEventListener('click', onOk);
+                cancelBtn.addEventListener('click', onCancel);
+            });
+        }
+
+        function triggerConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 45,
+                    spread: 60,
+                    origin: { y: 0.7 },
+                    colors: ['#FFB7C5', '#D0E1FD', '#E2D4F9', '#52B788', '#FFE5EC']
+                });
+            }
+        }
+    </script>
+</body>
+</html>
